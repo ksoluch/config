@@ -67,6 +67,7 @@ for _, server in ipairs(servers) do
     })
     vim.lsp.enable(server)
 end
+vim.keymap.set('n', 'grd', vim.lsp.buf.declaration, { desc = 'Go to Declaration' })
 
 local cmp = require("cmp")
 cmp.setup({
