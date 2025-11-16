@@ -38,6 +38,11 @@ vim.pack.add{
   { src = 'https://github.com/nvim-telescope/telescope.nvim' },
 }
 
+vim.diagnostic.config({
+-- virtual_lines = true,
+virtual_text = true,
+})
+
 vim.lsp.config['clangd'] = {
   cmd = {
     'clangd',
