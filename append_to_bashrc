@@ -11,6 +11,16 @@ shopt -s histappend
 # allow coredump
 ulimit -c unlimited
 
+# enables glob **/
+shopt -s globstar
+
+#?(pattern)	Matches zero or one occurrence        (pattern)?
+#*(pattern)	Matches zero or more occurrences      (pattern)*
+#+(pattern)	Matches one or more occurrences       (pattern)+
+#@(pattern)	Matches exactly one of the patterns   (pattern)
+#!(pattern)	Matches anything except the patterns  Negation
+shopt -s extglob
+
 # Git branch in the prompt
 #if [ "$color_prompt" = yes ]; then
 #    PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]$(__git_ps1)\n\$ '
