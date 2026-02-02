@@ -51,7 +51,7 @@ vim.lsp.config['clangd'] = {
     -- "--log=verbose",
   },
   init_options = {
-    fallbackFlags = { "-std=c++17" },
+    fallbackFlags = { "-std=c++17", "-xc++", "-std=c11", "-xc" },
   },
   filetypes = { 'cpp', 'c', 'h' },
   root_markers = { '.clangd', 'compile_commands.json', '.git' },
