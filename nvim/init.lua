@@ -48,12 +48,16 @@ vim.lsp.config['clangd'] = {
     'clangd',
     "--background-index",
     "--clang-tidy",
+    "--all-scopes-completion",
+    "--completion-style=detailed",
+    "--header-insertion=iwyu",
     -- "--log=verbose",
   },
   init_options = {
-    fallbackFlags = { "-std=c++17", "-xc++", "-std=c11", "-xc" },
+    fallbackFlags = { "-std=c++20", "-xc++", "-std=c11", "-xc" },
+    compilationDatabaseDirectory = "build", -- Point this to your build folder
   },
-  filetypes = { 'cpp', 'c', 'h' },
+  filetypes = { 'cpp', 'c', 'h', "cppm", "cxx", "hxx" },
   root_markers = { '.clangd', 'compile_commands.json', '.git' },
   capabilities = {
     textDocument = {
