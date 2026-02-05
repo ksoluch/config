@@ -141,6 +141,11 @@ telescope.setup({
 })
 local builtin = require('telescope.builtin')
 vim.keymap.set('n', '<leader>f', builtin.find_files, { desc = 'Telescope find files' })
-vim.keymap.set('n', '<leader>g', builtin.live_grep, { desc = 'Telescope live grep' })
-vim.keymap.set('n', '<leader>b', builtin.buffers, { desc = 'Telescope buffers' })
-vim.keymap.set('n', '<leader>r', builtin.current_buffer_fuzzy_find, { desc = 'Telescope buffers' })
+vim.keymap.set('n', '<leader>g', builtin.live_grep, { desc = 'Telescope live grep all files' })
+vim.keymap.set('n', '<leader>b', builtin.buffers, { desc = 'Telescope the oppen buffers' })
+vim.keymap.set('n', '<leader>r', builtin.current_buffer_fuzzy_find, { desc = 'Telescope the content of the current buffer' })
+vim.keymap.set('n', '<leader>t', function()
+  builtin.live_grep({
+    grep_open_files = true,
+  })
+end, { desc = 'Telescope the content of the open buffers' })
