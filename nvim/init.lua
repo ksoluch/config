@@ -43,6 +43,19 @@ vim.diagnostic.config({
 virtual_text = true,
 })
 
+vim.lsp.config['pyright'] = {
+  settings = {
+    python = {
+      analysis = {
+        autoSearchPaths = true,
+        useLibraryCodeForTypes = true,
+        diagnosticMode = "workspace", -- Analyzes all files in the project
+        typeCheckingMode = "basic",   -- "off", "basic", or "strict"
+      },
+    },
+  },
+}
+
 vim.lsp.config['clangd'] = {
   cmd = {
     'clangd',
@@ -67,7 +80,7 @@ vim.lsp.config['clangd'] = {
   },
 }
 
-local servers = { "clangd" }
+local servers = { "clangd", "pyright" }
 for _, server in ipairs(servers) do
     vim.lsp.config(server, {
         capabilities = require("cmp_nvim_lsp").default_capabilities(),
