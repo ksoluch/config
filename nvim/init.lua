@@ -43,6 +43,22 @@ vim.diagnostic.config({
 virtual_text = true,
 })
 
+vim.lsp.config['rust_analyzer'] = {
+  settings = {
+    ['rust-analyzer'] = {
+      checkOnSave = {
+        command = "clippy", -- Use clippy for better linting on save
+      },
+      cargo = {
+        allFeatures = true,
+      },
+      procMacro = {
+        enable = true,
+      },
+    },
+  },
+}
+
 vim.lsp.config['pyright'] = {
   settings = {
     python = {
@@ -80,7 +96,7 @@ vim.lsp.config['clangd'] = {
   },
 }
 
-local servers = { "clangd", "pyright" }
+local servers = { "clangd", "pyright", "rust_analyzer"}
 for _, server in ipairs(servers) do
     vim.lsp.config(server, {
         capabilities = require("cmp_nvim_lsp").default_capabilities(),
@@ -153,6 +169,7 @@ telescope.setup({
   },
 })
 local builtin = require('telescope.builtin')
+vim.keymap.set('n', '<leader>a', function() vim.lsp.buf.code_action() end, { desc = 'Rust Code Actions' })
 vim.keymap.set('n', '<leader>f', builtin.find_files, { desc = 'Telescope find files' })
 vim.keymap.set('n', '<leader>g', builtin.live_grep, { desc = 'Telescope live grep all files' })
 vim.keymap.set('n', '<leader>b', builtin.buffers, { desc = 'Telescope the oppen buffers' })
