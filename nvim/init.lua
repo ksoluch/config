@@ -46,9 +46,7 @@ virtual_text = true,
 vim.lsp.config['rust_analyzer'] = {
   settings = {
     ['rust-analyzer'] = {
-      checkOnSave = {
-        command = "clippy", -- Use clippy for better linting on save
-      },
+      checkOnSave = true,
       cargo = {
         allFeatures = true,
       },
