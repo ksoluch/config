@@ -167,6 +167,9 @@ telescope.setup({
   },
 })
 local builtin = require('telescope.builtin')
+vim.keymap.set("n", "<leader>q", ":bd<CR>", { desc = "Close the current buffer" })
+vim.keymap.set('n', '<leader>w', ":cd <C-r>=expand('%:p:h')<CR>", { desc = "Pre-fill cd with current buffer directory" })
+vim.keymap.set("n", "<leader>e", ":edit %:p:h<CR>", { desc = "Explore the directory of the current file" })
 vim.keymap.set('n', '<leader>a', function() vim.lsp.buf.code_action() end, { desc = 'Rust Code Actions' })
 vim.keymap.set('n', '<leader>f', builtin.find_files, { desc = 'Telescope find files' })
 vim.keymap.set('n', '<leader>g', builtin.live_grep, { desc = 'Telescope live grep all files' })
