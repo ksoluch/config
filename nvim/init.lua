@@ -36,6 +36,7 @@ vim.pack.add{
   { src = 'https://github.com/easymotion/vim-easymotion' },
   { src = 'https://github.com/nvim-lua/plenary.nvim' },
   { src = 'https://github.com/nvim-telescope/telescope.nvim' },
+  { src = 'https://github.com/Civitasv/cmake-tools.nvim' },
 }
 
 vim.diagnostic.config({
@@ -43,66 +44,87 @@ vim.diagnostic.config({
 virtual_text = true,
 })
 
-vim.lsp.config['rust_analyzer'] = {
-  settings = {
-    ['rust-analyzer'] = {
-      checkOnSave = true,
-      cargo = {
-        allFeatures = true,
+-- 1. Define your configurations in a local table for better organization
+local configs = {
+  rust_analyzer = {
+    settings = {
+      ['rust-analyzer'] = {
+        checkOnSave = true,
+        cargo = { allFeatures = true },
+        procMacro = { enable = true },
       },
-      procMacro = {
+    },
+  },
+  pyright = {
+    settings = {
+      python = {
+        analysis = {
+          autoSearchPaths = true,
+          useLibraryCodeForTypes = true,
+          diagnosticMode = "workspace",
+          typeCheckingMode = "basic",
+        },
+      },
+    },
+  },
+  neocmakelsp = {
+    cmd = { "neocmakelsp", "stdio" },
+    filetypes = { "cmake" },
+    root_markers = { "CMakeLists.txt", ".git" },
+    init_options = {
+      format = {
         enable = true,
       },
-    },
-  },
-}
-
-vim.lsp.config['pyright'] = {
-  settings = {
-    python = {
-      analysis = {
-        autoSearchPaths = true,
-        useLibraryCodeForTypes = true,
-        diagnosticMode = "workspace", -- Analyzes all files in the project
-        typeCheckingMode = "basic",   -- "off", "basic", or "strict"
-      },
-    },
-  },
-}
-
-vim.lsp.config['clangd'] = {
-  cmd = {
-    'clangd',
-    "--background-index",
-    "--clang-tidy",
-    "--all-scopes-completion",
-    "--completion-style=detailed",
-  },
-  init_options = {
-    fallbackFlags = { "-std=c++20" },
-    -- fallbackFlags = { "-std=c11" },
-    compilationDatabaseDirectory = "build", -- Point this to your build folder
-  },
-  filetypes = { 'cpp', 'c', 'h' },
-  root_markers = { '.clangd', 'compile_commands.json', '.git' },
-  capabilities = {
-    textDocument = {
-      semanticTokens = {
-        multilineTokenSupport = true,
-      }
+      scan_cmake_in_package = true, -- Helps with finding package completions
     }
   },
+  clangd = {
+    cmd = {
+      'clangd-20',
+      "--background-index",
+      "--clang-tidy",
+      "--all-scopes-completion",
+      "--completion-style=detailed",
+      "--compile-commands-dir=/home/soluch01/w/p4-device-software-definition/build",
+    },
+    init_options = {
+      fallbackFlags = { "-std=c++17" },
+    },
+    filetypes = { 'cpp', 'c', 'h', 'hpp' },
+    root_markers = { '.clangd', 'compile_commands.json', '.git' },
+    capabilities = {
+      textDocument = {
+        semanticTokens = {
+          multilineTokenSupport = true,
+        }
+      }
+    },
+  }
 }
 
-local servers = { "clangd", "pyright", "rust_analyzer"}
-for _, server in ipairs(servers) do
-    vim.lsp.config(server, {
-        capabilities = require("cmp_nvim_lsp").default_capabilities(),
-        settings = {},
-    })
-    vim.lsp.enable(server)
+-- 2. Loop through and apply them using the native API
+for server, config in pairs(configs) do
+  -- Inject nvim-cmp capabilities if the plugin is available
+  local has_cmp, cmp_lsp = pcall(require, "cmp_nvim_lsp")
+  if has_cmp then
+    config.capabilities = vim.tbl_deep_extend(
+      "force",
+      config.capabilities or {},
+      cmp_lsp.default_capabilities()
+    )
+  end
+
+  -- Register the config (Function call, not table assignment)
+  vim.lsp.config(server, config)
+  
+  -- Enable the server
+  vim.lsp.enable(server)
 end
-vim.keymap.set('n', 'grd', vim.lsp.buf.declaration, { desc = 'Go to Declaration' })
+
+require("cmake-tools").setup({
+  cmake_build_directory = "build",
+  cmake_generate_options = { "-DCMAKE_EXPORT_COMPILE_COMMANDS=1" },
+})
 
 local cmp = require("cmp")
 cmp.setup({
@@ -169,10 +191,11 @@ telescope.setup({
 local builtin = require('telescope.builtin')
 vim.keymap.set("n", "<leader>q", ":bd<CR>", { desc = "Close the current buffer" })
 vim.keymap.set('n', '<leader>w', ":cd <C-r>=expand('%:p:h')<CR>", { desc = "Pre-fill cd with current buffer directory" })
-vim.keymap.set("n", "<leader>e", ":edit %:p:h<CR>", { desc = "Explore the directory of the current file" })
+vim.keymap.set("n", "<leader>e", ":edit %:p:h<CR>", { desc = "Print current file directory" })
 vim.keymap.set('n', '<leader>a', function() vim.lsp.buf.code_action() end, { desc = 'Rust Code Actions' })
 vim.keymap.set('n', '<leader>f', builtin.find_files, { desc = 'Telescope find files' })
 vim.keymap.set('n', '<leader>g', builtin.live_grep, { desc = 'Telescope live grep all files' })
+vim.keymap.set('n', '<leader>G', ":Telescope live_grep glob_pattern=", { desc = 'Telescope live grep some files' })
 vim.keymap.set('n', '<leader>b', builtin.buffers, { desc = 'Telescope the oppen buffers' })
 vim.keymap.set('n', '<leader>r', builtin.current_buffer_fuzzy_find, { desc = 'Telescope the content of the current buffer' })
 vim.keymap.set('n', '<leader>t', function()
@@ -180,3 +203,15 @@ vim.keymap.set('n', '<leader>t', function()
     grep_open_files = true,
   })
 end, { desc = 'Telescope the content of the open buffers' })
+vim.keymap.set('n', 'grD', vim.lsp.buf.declaration, { desc = 'Go to Declaration' })
+vim.keymap.set('n', 'grd', vim.lsp.buf.definition, { desc = 'Go to Definition' })
+vim.keymap.set('n', '<leader>p', function()
+  local path = vim.fn.expand('%:p')
+  vim.fn.setreg('+', path)
+  print("Copied path: " .. path)
+end, { desc = 'Copy current file path' })
+vim.keymap.set('n', '<leader>F', function()
+  -- This types the command into the command line without executing it
+  local current_dir = vim.fn.getcwd() .. '/'
+  vim.api.nvim_feedkeys(':Telescope find_files cwd=' .. current_dir, 'n', false)
+end, { desc = 'Pre-fill Telescope find_files command' })
