@@ -211,7 +211,10 @@ vim.keymap.set('n', '<leader>p', function()
   print("Copied path: " .. path)
 end, { desc = 'Copy current file path' })
 vim.keymap.set('n', '<leader>F', function()
-  -- This types the command into the command line without executing it
-  local current_dir = vim.fn.getcwd() .. '/'
-  vim.api.nvim_feedkeys(':Telescope find_files cwd=' .. current_dir, 'n', false)
-end, { desc = 'Pre-fill Telescope find_files command' })
+  -- Get the directory of the current buffer's file
+  local buffer_dir = vim.fn.expand('%:p:h')
+  -- Type the command into the command line buffer
+  -- We add the '/' at the end to make appending subfolders easier
+  local cmd = ':Telescope find_files cwd=' .. buffer_dir .. '/'
+  vim.api.nvim_feedkeys(cmd, 'n', false)
+end, { desc = 'Telescope: Find files in current buffer directory' })
