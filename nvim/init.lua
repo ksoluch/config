@@ -210,6 +210,7 @@ vim.keymap.set('n', '<leader>p', function()
   vim.fn.setreg('+', path)
   print("Copied path: " .. path)
 end, { desc = 'Copy current file path' })
+
 vim.keymap.set('n', '<leader>F', function()
   -- Get the directory of the current buffer's file
   local buffer_dir = vim.fn.expand('%:p:h')
@@ -218,3 +219,11 @@ vim.keymap.set('n', '<leader>F', function()
   local cmd = ':Telescope find_files cwd=' .. buffer_dir .. '/'
   vim.api.nvim_feedkeys(cmd, 'n', false)
 end, { desc = 'Telescope: Find files in current buffer directory' })
+
+vim.keymap.set('n', 'gr', function()
+  require('telescope.builtin').lsp_references({
+    include_declaration = true,
+    show_line = true,
+    jump_type = "never", -- Prevents jumping if only one result is found
+  })
+end, { desc = "LSP References (Telescope)" })
