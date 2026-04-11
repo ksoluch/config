@@ -142,10 +142,53 @@ local actions = require('telescope.actions')
 local telescope = require("telescope")
 telescope.setup({
   defaults = {
+    layout_strategy = 'horizontal',
+    layout_config = {
+      horizontal = {
+        width = 0.95,         -- 95% of screen width
+        height = 0.85,        -- 85% of screen height
+        preview_width = 0.5,  -- Split 50/50 between list and preview
+        prompt_position = "bottom",
+      },
+    },
+    -- path_display = { "smart" }, -- Shows the most relevant parts of the path
     mappings = {
       i = {
         ["<C-k>"] = actions.move_selection_previous,
         ["<C-j>"] = actions.move_selection_next,
+      },
+    },
+    -- configure to use ripgrep
+    vimgrep_arguments = {
+      "rg",
+      "--follow",        -- Follow symbolic links
+      "--hidden",        -- Search for hidden files
+      "--no-heading",    -- Don't group matches by each file
+      "--with-filename", -- Print the file path with the matched lines
+      "--line-number",   -- Show line numbers
+      "--column",        -- Show column numbers
+      "--smart-case",    -- Smart case search
+      -- Exclude some patterns from search
+      "--glob=!**/.git/*",
+      "--glob=!**/.idea/*",
+      "--glob=!**/build/*",
+      "--glob=!**/obj/*",
+    },
+  },
+  pickers = {
+    find_files = {
+      hidden = true,
+      -- needed to exclude some files & dirs from general search
+      -- when not included or specified in .gitignore
+      find_command = {
+        "rg",
+        "--follow",
+        "--files",
+        "--hidden",
+        -- Exclude some patterns from search
+        "--glob=!**/.git/*",
+        "--glob=!**/build/*",
+        "--glob=!**/obj/*",
       },
     },
   },
