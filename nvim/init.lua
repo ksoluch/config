@@ -1,3 +1,5 @@
+-- For  blink to work run 'cargo build --release' in ~/.local/share/nvim/site/pack/core/opt/blink.cmp
+
 vim.g.mapleader = ' '
 vim.g.maplocalleader = ' '
 
@@ -5,46 +7,45 @@ vim.keymap.set('n', 'S', '<Plug>(easymotion-s)', {
   silent = true, noremap = true, desc = "EasyMotion: Search All Character"
 })
 
-vim.opt.termguicolors = true                       -- Enable 24-bit colors
-vim.opt.number = true                              -- Line numbers
-vim.opt.relativenumber = true                      -- Relative line numbers
-vim.opt.cursorline = true                          -- Highlight current line
-vim.opt.wrap = false                               -- Don't wrap lines
-vim.opt.scrolloff = 10                             -- Keep 10 lines above/below cursor 
-vim.opt.sidescrolloff = 8                          -- Keep 8 columns left/right of cursor
-vim.opt.tabstop = 2                                -- Tab width
-vim.opt.shiftwidth = 2                             -- Indent width
-vim.opt.softtabstop = 2                            -- Soft tab stop
-vim.opt.expandtab = true                           -- Use spaces instead of tabs
-vim.opt.smartindent = true                         -- Smart auto-indenting
-vim.opt.autoindent = true                          -- Copy indent from current line
-vim.opt.clipboard:append("unnamedplus")            -- Use system clipboard
-vim.opt.path:append("**")                          -- include subdirectories in search
-vim.opt.colorcolumn = "120"                        -- Show column at 100 characters
-vim.opt.lazyredraw = true                          -- Don't redraw during macros
-vim.opt.autoread = true                            -- Auto reload files changed outside vim
-vim.opt.foldlevel = 99                             -- Start with all folds open
-vim.opt.splitbelow = true                          -- Horizontal splits go below
-vim.opt.splitright = true                          -- Vertical splits go right
+-- Options
+vim.opt.termguicolors = true
+vim.opt.number = true
+vim.opt.relativenumber = true
+vim.opt.cursorline = true
+vim.opt.wrap = false
+vim.opt.scrolloff = 10
+vim.opt.sidescrolloff = 8
+vim.opt.tabstop = 2
+vim.opt.shiftwidth = 2
+vim.opt.softtabstop = 2
+vim.opt.expandtab = true
+vim.opt.smartindent = true
+vim.opt.autoindent = true
+vim.opt.clipboard:append("unnamedplus")
+vim.opt.path:append("**")
+vim.opt.colorcolumn = "120"
+vim.opt.lazyredraw = true
+vim.opt.autoread = true
+vim.opt.foldlevel = 99
+vim.opt.splitbelow = true
+vim.opt.splitright = true
 
-vim.pack.add{
+-- Plugins
+vim.pack.add({
+  { src = 'https://github.com/saghen/blink.cmp.git' },
   { src = 'https://github.com/neovim/nvim-lspconfig' },
-  { src = "https://github.com/hrsh7th/nvim-cmp.git" },
-  { src = "https://github.com/hrsh7th/cmp-nvim-lsp.git" },
-  { src = "https://github.com/hrsh7th/cmp-buffer.git" },
-  { src = "https://github.com/saghen/blink.cmp.git" },
   { src = 'https://github.com/easymotion/vim-easymotion' },
   { src = 'https://github.com/nvim-lua/plenary.nvim' },
   { src = 'https://github.com/nvim-telescope/telescope.nvim' },
   { src = 'https://github.com/Civitasv/cmake-tools.nvim' },
-}
-
-vim.diagnostic.config({
--- virtual_lines = true,
-virtual_text = true,
 })
 
--- 1. Define your configurations in a local table for better organization
+-- LSP Diagnostics
+vim.diagnostic.config({
+  virtual_text = true,
+})
+
+-- LSP Server Configurations
 local configs = {
   rust_analyzer = {
     settings = {
@@ -72,10 +73,8 @@ local configs = {
     filetypes = { "cmake" },
     root_markers = { "CMakeLists.txt", ".git" },
     init_options = {
-      format = {
-        enable = true,
-      },
-      scan_cmake_in_package = true, -- Helps with finding package completions
+      format = { enable = true },
+      scan_cmake_in_package = true,
     }
   },
   clangd = {
@@ -87,62 +86,58 @@ local configs = {
       "--completion-style=detailed",
       "--compile-commands-dir=/home/soluch01/w/p4-device-software-definition/build",
     },
-    init_options = {
-      fallbackFlags = { "-std=c++17" },
-    },
+    init_options = { fallbackFlags = { "-std=c++17" } },
     filetypes = { 'cpp', 'c', 'h', 'hpp' },
     root_markers = { '.clangd', 'compile_commands.json', '.git' },
-    capabilities = {
-      textDocument = {
-        semanticTokens = {
-          multilineTokenSupport = true,
-        }
-      }
-    },
   }
 }
 
--- 2. Loop through and apply them using the native API
+-- Apply configurations using blink.cmp capabilities
 for server, config in pairs(configs) do
-  -- Inject nvim-cmp capabilities if the plugin is available
-  local has_cmp, cmp_lsp = pcall(require, "cmp_nvim_lsp")
-  if has_cmp then
-    config.capabilities = vim.tbl_deep_extend(
-      "force",
-      config.capabilities or {},
-      cmp_lsp.default_capabilities()
-    )
+  local has_blink, blink = pcall(require, "blink.cmp")
+  if has_blink then
+    config.capabilities = blink.get_lsp_capabilities(config.capabilities)
   end
 
-  -- Register the config (Function call, not table assignment)
   vim.lsp.config(server, config)
-  
-  -- Enable the server
   vim.lsp.enable(server)
 end
 
-require("cmake-tools").setup({
-  cmake_build_directory = "build",
-  cmake_generate_options = { "-DCMAKE_EXPORT_COMPILE_COMMANDS=1" },
-})
-
-local cmp = require("cmp")
-cmp.setup({
-    mapping = cmp.mapping.preset.insert({
-        ["<C-e>"] = cmp.mapping.confirm({ select = true }),
-        ['<C-w>'] = cmp.mapping.complete(),
-        ['<C-q>'] = cmp.mapping.abort(),
-        ["<C-j>"] = cmp.mapping.select_next_item(),
-        ["<C-k>"] = cmp.mapping.select_prev_item(),
-    }),
-    sources = {
-        { name = "nvim_lsp" },
-        { name = "buffer" },
+-- blink.cmp Setup
+require('blink.cmp').setup({
+  keymap = {
+    preset = 'default',
+    ['<C-e>'] = { 'accept', 'fallback' },
+    ['<C-j>'] = { 'select_next', 'fallback' },
+    ['<C-k>'] = { 'select_prev', 'fallback' },
+    ['<C-w>'] = { 'show', 'show_documentation', 'hide_documentation' },
+    -- Scroll the doc window while staying in Insert mode
+    ['<C-f>'] = { 'scroll_documentation_down', 'fallback' },
+    ['<C-b>'] = { 'scroll_documentation_up', 'fallback' },
+  },
+  appearance = {
+    use_nvim_cmp_as_default = true,
+    nerd_font_variant = 'mono'
+  },
+  sources = {
+    default = { 'lsp', 'path', 'snippets', 'buffer' },
+  },
+  completion = {
+    ghost_text = { enabled = true },
+    menu = { auto_show = true },
+    documentation = { 
+      auto_show = true, 
+      auto_show_delay_ms = 200,
+      window = {
+        max_width = 80,
+        max_height = 20,
+        border = 'rounded',
+      }
     },
-    experimental = { ghost_text = true },
+  }
 })
-pcall(require, "blink.cmp")
 
+-- Telescope & Mappings
 local actions = require('telescope.actions')
 local telescope = require("telescope")
 telescope.setup({
@@ -153,64 +148,13 @@ telescope.setup({
         ["<C-j>"] = actions.move_selection_next,
       },
     },
-    -- configure to use ripgrep
-    vimgrep_arguments = {
-      "rg",
-      "--follow",        -- Follow symbolic links
-      "--hidden",        -- Search for hidden files
-      "--no-heading",    -- Don't group matches by each file
-      "--with-filename", -- Print the file path with the matched lines
-      "--line-number",   -- Show line numbers
-      "--column",        -- Show column numbers
-      "--smart-case",    -- Smart case search
-      -- Exclude some patterns from search
-      "--glob=!**/.git/*",
-      "--glob=!**/.idea/*",
-      "--glob=!**/build/*",
-      "--glob=!**/obj/*",
-    },
-  },
-  pickers = {
-    find_files = {
-      hidden = true,
-      -- needed to exclude some files & dirs from general search
-      -- when not included or specified in .gitignore
-      find_command = {
-        "rg",
-        "--follow",
-        "--files",
-        "--hidden",
-        -- Exclude some patterns from search
-        "--glob=!**/.git/*",
-        "--glob=!**/build/*",
-        "--glob=!**/obj/*",
-      },
-    },
   },
 })
-local builtin = require('telescope.builtin')
-vim.keymap.set("n", "<leader>q", ":bd<CR>", { desc = "Close the current buffer" })
-vim.keymap.set('n', '<leader>w', ":cd <C-r>=expand('%:p:h')<CR>", { desc = "Pre-fill cd with current buffer directory" })
-vim.keymap.set("n", "<leader>e", ":edit %:p:h<CR>", { desc = "Print current file directory" })
-vim.keymap.set('n', '<leader>a', function() vim.lsp.buf.code_action() end, { desc = 'Rust Code Actions' })
-vim.keymap.set('n', '<leader>f', builtin.find_files, { desc = 'Telescope find files' })
-vim.keymap.set('n', '<leader>g', builtin.live_grep, { desc = 'Telescope live grep all files' })
-vim.keymap.set('n', '<leader>G', ":Telescope live_grep glob_pattern=", { desc = 'Telescope live grep some files' })
-vim.keymap.set('n', '<leader>b', builtin.buffers, { desc = 'Telescope the oppen buffers' })
-vim.keymap.set('n', '<leader>r', builtin.current_buffer_fuzzy_find, { desc = 'Telescope the content of the current buffer' })
-vim.keymap.set('n', '<leader>t', function()
-  builtin.live_grep({
-    grep_open_files = true,
-  })
-end, { desc = 'Telescope the content of the open buffers' })
-vim.keymap.set('n', 'grD', vim.lsp.buf.declaration, { desc = 'Go to Declaration' })
-vim.keymap.set('n', 'grd', vim.lsp.buf.definition, { desc = 'Go to Definition' })
-vim.keymap.set('n', '<leader>p', function()
-  local path = vim.fn.expand('%:p')
-  vim.fn.setreg('+', path)
-  print("Copied path: " .. path)
-end, { desc = 'Copy current file path' })
 
+local builtin = require('telescope.builtin')
+vim.keymap.set("n", "<leader>q", ":bd<CR>", { desc = "Close buffer" })
+vim.keymap.set('n', '<leader>w', ":cd <C-r>=expand('%:p:h')<CR>", { desc = "cd to current file dir" })
+vim.keymap.set('n', '<leader>f', builtin.find_files, { desc = 'Find files' })
 vim.keymap.set('n', '<leader>F', function()
   -- Get the directory of the current buffer's file
   local buffer_dir = vim.fn.expand('%:p:h')
@@ -219,7 +163,10 @@ vim.keymap.set('n', '<leader>F', function()
   local cmd = ':Telescope find_files cwd=' .. buffer_dir .. '/'
   vim.api.nvim_feedkeys(cmd, 'n', false)
 end, { desc = 'Telescope: Find files in current buffer directory' })
-
+vim.keymap.set('n', '<leader>g', builtin.live_grep, { desc = 'Live grep' })
+-- vim.keymap.set('n', '<leader>G', ":Telescope live_grep glob_pattern=", { desc = 'Telescope live grep some files' })
+vim.keymap.set('n', '<leader>G', ":Telescope live_grep glob_pattern=!**/*test*<Left>", { desc = 'Telescope live grep excluding test files' })
+vim.keymap.set('n', 'grd', vim.lsp.buf.definition, { desc = 'Go to Definition' })
 vim.keymap.set('n', 'gr', function()
   require('telescope.builtin').lsp_references({
     include_declaration = true,
@@ -227,3 +174,21 @@ vim.keymap.set('n', 'gr', function()
     jump_type = "never", -- Prevents jumping if only one result is found
   })
 end, { desc = "LSP References (Telescope)" })
+-- Path copy utility
+vim.keymap.set('n', '<leader>p', function()
+  local path = vim.fn.expand('%:p')
+  vim.fn.setreg('+', path)
+  print("Copied path: " .. path)
+end, { desc = 'Copy current file path' })
+
+require("cmake-tools").setup({
+  cmake_build_directory = "build",
+})
+vim.keymap.set('n', '<leader>b', builtin.buffers, { desc = 'Telescope the oppen buffers' })
+vim.keymap.set('n', '<leader>r', builtin.current_buffer_fuzzy_find, { desc = 'Telescope the content of the current buffer' })
+vim.keymap.set('n', '<leader>t', function()
+  builtin.live_grep({
+    grep_open_files = true,
+  })
+end, { desc = 'Telescope the content of the open buffers' })
+vim.keymap.set('n', '<leader>a', function() vim.lsp.buf.code_action() end, { desc = 'Rust Code Actions' })
