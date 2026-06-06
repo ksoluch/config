@@ -21,7 +21,6 @@ vim.opt.softtabstop = 2
 vim.opt.expandtab = true
 vim.opt.smartindent = true
 vim.opt.autoindent = true
-vim.opt.clipboard:append("unnamedplus")
 vim.opt.path:append("**")
 vim.opt.colorcolumn = "120"
 vim.opt.lazyredraw = true
@@ -30,8 +29,13 @@ vim.opt.foldlevel = 99
 vim.opt.splitbelow = true
 vim.opt.splitright = true
 
+-- vim.opt.clipboard:append("unnamedplus")
+vim.keymap.set({'n', 'v'}, 'y', '"+y', { desc = 'Yank to system clipboard' })
+vim.keymap.set('n', 'Y', '"+Y', { desc = 'Yank line to system clipboard' })
+
 -- Plugins
 vim.pack.add({
+  { src = 'https://github.com/saghen/blink.lib.git' },
   { src = 'https://github.com/saghen/blink.cmp.git' },
   { src = 'https://github.com/neovim/nvim-lspconfig' },
   { src = 'https://github.com/easymotion/vim-easymotion' },
@@ -92,9 +96,11 @@ local configs = {
   }
 }
 
+-- Check for blink.cmp ONCE outside the loop to prevent loader spam
+local has_blink, blink = pcall(require, "blink.cmp")
+
 -- Apply configurations using blink.cmp capabilities
 for server, config in pairs(configs) do
-  local has_blink, blink = pcall(require, "blink.cmp")
   if has_blink then
     config.capabilities = blink.get_lsp_capabilities(config.capabilities)
   end
