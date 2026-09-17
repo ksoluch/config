@@ -29,6 +29,9 @@ vim.opt.foldlevel = 99
 vim.opt.splitbelow = true
 vim.opt.splitright = true
 
+-- Enable debug logging for LSP troubleshooting (view via :LspLog)
+vim.lsp.set_log_level(vim.log.levels.WARN)
+
 -- vim.opt.clipboard:append("unnamedplus")
 vim.keymap.set({'n', 'v'}, 'y', '"+y', { desc = 'Yank to system clipboard' })
 vim.keymap.set('n', 'Y', '"+Y', { desc = 'Yank line to system clipboard' })
@@ -83,16 +86,17 @@ local configs = {
   },
   clangd = {
     cmd = {
-      'clangd-20',
+      'clangd',
       "--background-index",
       "--clang-tidy",
       "--all-scopes-completion",
       "--completion-style=detailed",
-      "--compile-commands-dir=/home/soluch01/w/p4-device-software-definition/build",
+      "--experimental-modules-support",
+      "--header-insertion=iwyu",
     },
-    init_options = { fallbackFlags = { "-std=c++17" } },
+    init_options = { fallbackFlags = { "-std=c++23" } },
     filetypes = { 'cpp', 'c', 'h', 'hpp' },
-    root_markers = { '.clangd', 'compile_commands.json', '.git' },
+    root_markers = { 'compile_commands.json', '.clangd', 'CMakeLists.txt', '.git' },
   }
 }
 
@@ -157,14 +161,12 @@ telescope.setup({
         prompt_position = "bottom",
       },
     },
-    -- path_display = { "smart" }, -- Shows the most relevant parts of the path
     mappings = {
       i = {
         ["<C-k>"] = actions.move_selection_previous,
         ["<C-j>"] = actions.move_selection_next,
       },
     },
-    -- configure to use ripgrep
     vimgrep_arguments = {
       "rg",
       "--follow",        -- Follow symbolic links
@@ -174,7 +176,6 @@ telescope.setup({
       "--line-number",   -- Show line numbers
       "--column",        -- Show column numbers
       "--smart-case",    -- Smart case search
-      -- Exclude some patterns from search
       "--glob=!**/.git/*",
       "--glob=!**/.idea/*",
       "--glob=!**/build/*",
@@ -184,14 +185,11 @@ telescope.setup({
   pickers = {
     find_files = {
       hidden = true,
-      -- needed to exclude some files & dirs from general search
-      -- when not included or specified in .gitignore
       find_command = {
         "rg",
         "--follow",
         "--files",
         "--hidden",
-        -- Exclude some patterns from search
         "--glob=!**/.git/*",
         "--glob=!**/build/*",
         "--glob=!**/obj/*",
@@ -203,26 +201,24 @@ telescope.setup({
 local builtin = require('telescope.builtin')
 vim.keymap.set("n", "<leader>q", ":bd<CR>", { desc = "Close buffer" })
 vim.keymap.set('n', '<leader>w', ":cd <C-r>=expand('%:p:h')<CR>", { desc = "cd to current file dir" })
+vim.keymap.set('n', '<leader>e', ":e %:p:h<CR>", { desc = "cd to current file dir" })
 vim.keymap.set('n', '<leader>f', builtin.find_files, { desc = 'Find files' })
 vim.keymap.set('n', '<leader>F', function()
-  -- Get the directory of the current buffer's file
   local buffer_dir = vim.fn.expand('%:p:h')
-  -- Type the command into the command line buffer
-  -- We add the '/' at the end to make appending subfolders easier
   local cmd = ':Telescope find_files cwd=' .. buffer_dir .. '/'
   vim.api.nvim_feedkeys(cmd, 'n', false)
 end, { desc = 'Telescope: Find files in current buffer directory' })
 vim.keymap.set('n', '<leader>g', builtin.live_grep, { desc = 'Live grep' })
--- vim.keymap.set('n', '<leader>G', ":Telescope live_grep glob_pattern=", { desc = 'Telescope live grep some files' })
 vim.keymap.set('n', '<leader>G', ":Telescope live_grep glob_pattern=!**/*test*<Left>", { desc = 'Telescope live grep excluding test files' })
 vim.keymap.set('n', 'grd', vim.lsp.buf.definition, { desc = 'Go to Definition' })
 vim.keymap.set('n', 'gr', function()
   require('telescope.builtin').lsp_references({
     include_declaration = true,
     show_line = true,
-    jump_type = "never", -- Prevents jumping if only one result is found
+    jump_type = "never",
   })
 end, { desc = "LSP References (Telescope)" })
+
 -- Path copy utility
 vim.keymap.set('n', '<leader>p', function()
   local path = vim.fn.expand('%:p')
@@ -230,16 +226,26 @@ vim.keymap.set('n', '<leader>p', function()
   print("Copied path: " .. path)
 end, { desc = 'Copy current file path' })
 
+-- CMake Tools Setup (Auto-copies compile_commands.json to workspace root for clangd)
 require("cmake-tools").setup({
   cmake_build_directory = "build",
+  cmake_generate_options = { "-DCMAKE_EXPORT_COMPILE_COMMANDS=1" },
+  cmake_soft_link_compile_commands = true,
+  cmake_compile_commands_from_lsp = true,
 })
-vim.keymap.set('n', '<leader>b', builtin.buffers, { desc = 'Telescope the oppen buffers' })
-vim.keymap.set('n', '<leader>r', builtin.current_buffer_fuzzy_find, { desc = 'Telescope the content of the current buffer' })
+
+-- CMake Keymaps
+vim.keymap.set('n', '<leader>cg', '<CMD>CMakeGenerate<CR>', { desc = 'CMake Generate' })
+vim.keymap.set('n', '<leader>cb', '<CMD>CMakeBuild<CR>', { desc = 'CMake Build' })
+vim.keymap.set('n', '<leader>cr', '<CMD>CMakeRun<CR>', { desc = 'CMake Run' })
+
+-- Buffer Navigation & LSP Shortcuts
+vim.keymap.set('n', '<leader>b', builtin.buffers, { desc = 'Telescope open buffers' })
+vim.keymap.set('n', '<leader>r', builtin.current_buffer_fuzzy_find, { desc = 'Fuzzy search buffer' })
 vim.keymap.set('n', '<leader>t', function()
-  builtin.live_grep({
-    grep_open_files = true,
-  })
-end, { desc = 'Telescope the content of the open buffers' })
-vim.keymap.set('n', '<leader>a', function() vim.lsp.buf.code_action() end, { desc = 'Rust Code Actions' })
+  builtin.live_grep({ grep_open_files = true })
+end, { desc = 'Live grep open buffers' })
+vim.keymap.set('n', '<leader>a', function() vim.lsp.buf.code_action() end, { desc = 'LSP Code Actions' })
 vim.keymap.set('n', '-', '<CMD>b#<CR>', { silent = true })
 vim.keymap.set('n', '+', vim.lsp.buf.definition, { desc = 'Go to Definition' })
+vim.keymap.set('i', '<C-c>', '<Nop>', { noremap = true, silent = true })
