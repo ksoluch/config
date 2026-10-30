@@ -30,7 +30,7 @@ vim.opt.splitbelow = true
 vim.opt.splitright = true
 
 -- Enable debug logging for LSP troubleshooting (view via :LspLog)
-vim.lsp.set_log_level(vim.log.levels.WARN)
+vim.lsp.log.set_level(vim.log.levels.WARN)
 
 -- vim.opt.clipboard:append("unnamedplus")
 vim.keymap.set({'n', 'v'}, 'y', '"+y', { desc = 'Yank to system clipboard' })
@@ -249,3 +249,4 @@ vim.keymap.set('n', '<leader>a', function() vim.lsp.buf.code_action() end, { des
 vim.keymap.set('n', '-', '<CMD>b#<CR>', { silent = true })
 vim.keymap.set('n', '+', vim.lsp.buf.definition, { desc = 'Go to Definition' })
 vim.keymap.set('i', '<C-c>', '<Nop>', { noremap = true, silent = true })
+vim.keymap.set('n', '<leader><leader>', '<C-^>', { silent = true, desc = 'Switch to previous buffer' })
