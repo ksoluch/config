@@ -11,6 +11,7 @@ vim.keymap.set('n', 'S', '<Plug>(easymotion-s)', {
 vim.opt.termguicolors = true
 vim.opt.number = true
 vim.opt.relativenumber = true
+vim.opt.signcolumn = "yes"
 vim.opt.cursorline = true
 vim.opt.wrap = false
 vim.opt.scrolloff = 10
@@ -47,9 +48,10 @@ vim.pack.add({
   { src = 'https://github.com/Civitasv/cmake-tools.nvim' },
 })
 
--- LSP Diagnostics
+-- LSP Diagnostics (gutter signs only, no inline virtual text)
 vim.diagnostic.config({
-  virtual_text = true,
+  virtual_text = false,
+  signs = true,
 })
 
 -- LSP Server Configurations
@@ -199,6 +201,7 @@ telescope.setup({
 })
 
 local builtin = require('telescope.builtin')
+vim.keymap.set("n", "<leader>o", ":only<CR>", { desc = "Close other buffers" })
 vim.keymap.set("n", "<leader>q", ":bd<CR>", { desc = "Close buffer" })
 vim.keymap.set('n', '<leader>w', ":cd <C-r>=expand('%:p:h')<CR>", { desc = "cd to current file dir" })
 vim.keymap.set('n', '<leader>e', ":e %:p:h<CR>", { desc = "cd to current file dir" })
@@ -250,3 +253,5 @@ vim.keymap.set('n', '-', '<CMD>b#<CR>', { silent = true })
 vim.keymap.set('n', '+', vim.lsp.buf.definition, { desc = 'Go to Definition' })
 vim.keymap.set('i', '<C-c>', '<Nop>', { noremap = true, silent = true })
 vim.keymap.set('n', '<leader><leader>', '<C-^>', { silent = true, desc = 'Switch to previous buffer' })
+-- vim.keymap.set('n', '<leader><leader>', '<CMD>b#<CR>', { silent = true, desc = 'Switch to previous buffer' })
+
